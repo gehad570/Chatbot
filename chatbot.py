@@ -7,7 +7,7 @@ import requests
 # LOAD MODEL (IMPORTANT - cached)
 # ============================================
 
-model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+model_name = "google/flan-t5-small"
 
 @st.cache_resource
 def load_model():
