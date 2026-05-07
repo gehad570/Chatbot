@@ -14,15 +14,20 @@ import requests
 
 model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
+@st.cache_resource
+def load_model():
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map="auto",
+        torch_dtype="auto"
+    )
 
+    return tokenizer, model
+
+tokenizer, model = load_model()
 """**Memory System**"""
 
 conversation_history = []
