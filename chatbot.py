@@ -11,15 +11,11 @@ model_name = "google/flan-t5-small"
 
 @st.cache_resource
 def load_model():
-
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        device_map="auto",
+        device_map="cpu",
         torch_dtype="auto"
     )
-
     return tokenizer, model
 
 tokenizer, model = load_model()
