@@ -1,27 +1,8 @@
 import streamlit as st
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 import requests
 
 # ============================================
-# LOAD MODEL (IMPORTANT - cached)
-# ============================================
-
-model_name = "google/flan-t5-small"
-
-@st.cache_resource
-def load_model():
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        device_map="cpu",
-        torch_dtype="auto"
-    )
-    return tokenizer, model
-
-tokenizer, model = load_model()
-
-# ============================================
-# MEMORY SYSTEM
+# MEMORY (safe for Streamlit)
 # ============================================
 
 conversation_history = []
@@ -33,20 +14,8 @@ def add_to_memory(role, content):
     conversation_history.append({"role": role, "content": content})
 
 
-def get_memory_prompt():
-    prompt = "You are TravelBot, a helpful travel assistant.\n"
-
-    for msg in conversation_history[-10:]:
-        if msg["role"] == "user":
-            prompt += f"User: {msg['content']}\n"
-        else:
-            prompt += f"Assistant: {msg['content']}\n"
-
-    prompt += "Assistant: "
-    return prompt
-
 # ============================================
-# WEATHER
+# SIMPLE WEATHER
 # ============================================
 
 def get_weather(city):
@@ -57,8 +26,9 @@ def get_weather(city):
     except:
         return "Weather unavailable"
 
+
 # ============================================
-# CITY DETECTOR
+# CITY DETECTION
 # ============================================
 
 def extract_city(text):
@@ -74,54 +44,50 @@ def extract_city(text):
 
     return None
 
-# ============================================
-# CHAT GENERATION
-# ============================================
-
-def generate_response(prompt):
-
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-    output = model.generate(
-        **inputs,
-        max_new_tokens=200,
-        temperature=0.7,
-        pad_token_id=tokenizer.eos_token_id
-    )
-
-    response = tokenizer.decode(output[0], skip_special_tokens=True)
-
-    return response
 
 # ============================================
-# MAIN HANDLER
+# MAIN HANDLER (NO MODEL - SAFE)
 # ============================================
 
 def handle_user_input(user_message):
 
-    # Save memory
     add_to_memory("user", user_message)
 
+    msg = user_message.lower()
+
     # Greeting
-    if "hello" in user_message.lower():
+    if "hello" in msg or "hi" in msg:
         return "👋 Hello! Where do you want to travel?"
+
+    # Name
+    if "my name is" in msg:
+        name = user_message.split("my name is")[-1].strip().split()[0]
+        user_profile["name"] = name.title()
+        return f"Nice to meet you {user_profile['name']} 😊"
 
     # City detection
     city = extract_city(user_message)
 
     if city:
         weather = get_weather(city)
-        prompt = f"Plan a short 2-day trip to {city}"
-        answer = generate_response(prompt)
 
-        add_to_memory("assistant", answer)
+        response = f"""
+✈️ Travel info for {city}
 
-        return f"✈️ Trip Plan for {city}\n\n{answer}\n\n🌤️ {weather}"
+🌤️ Weather: {weather}
 
-    # Normal chat
-    prompt = get_memory_prompt()
-    response = generate_response(prompt)
+🗺️ Suggestion:
+- Visit main attractions
+- Try local food
+- Explore city center
+"""
 
+        add_to_memory("assistant", response)
+        return response
+
+    # fallback chat
+    response = "🌍 Tell me a city and I will plan your trip!"
     add_to_memory("assistant", response)
 
     return response
+    
