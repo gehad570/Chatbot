@@ -54,7 +54,7 @@ def extract_city(text):
 # ============================================
 def chat_with_groq(prompt, system="You are TravelBot, a friendly travel assistant."):
     response = client.chat.completions.create(
-        model="llama3-8b-8192",
+        model="llama-3.1-8b-instant",
         messages=[
             {"role": "system", "content": system},
             {"role": "user", "content": prompt}
